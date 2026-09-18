@@ -1,0 +1,46 @@
+name: Update Scopus enriched data
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "scopus.csv"
+      - "update_scopus.py"
+  schedule:
+    # 01:00 UTC = 06:00 Uzbekistan time
+    - cron: "0 1 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Update CiteScore / percentile / quartile
+        env:
+          ELSEVIER_API_KEY: ${{ secrets.ELSEVIER_API_KEY }}
+          SCOPUS_CACHE_DAYS: "7"
+        run: python update_scopus.py
+
+      - name: Commit generated data
+        run: |
+          git config user.name "buxdu-scopus-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add scopus_enriched.csv data/update_status.json data/api_cache || true
+          if git diff --cached --quiet; then
+            echo "No generated changes."
+          else
+            git commit -m "Update Scopus analytics data"
+            git push
+          fi

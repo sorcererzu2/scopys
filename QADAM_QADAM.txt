@@ -1,0 +1,27 @@
+BUXDU SCOPUS GITHUB — FLAT VERSION
+
+Bu paketda PAPKA YO'Q. GitHub web orqali hamma faylni root qismiga yuklash mumkin.
+
+GitHub'ga yuklanadigan fayllar:
+- index.html
+- scopus.csv
+- scopus_enriched.csv
+- update_scopus.py
+
+Workflow uchun:
+1. GitHub repository -> Actions
+2. "set up a workflow yourself" ni bosing.
+3. GitHub avtomatik .github/workflows/ papkasini o'zi yaratadi.
+4. Default fayl nomini update.yml qiling.
+5. GITHUB_WORKFLOW_COPY_THIS.txt ichidagi hamma matnni copy-paste qiling.
+6. Commit changes.
+
+API Key:
+Settings -> Secrets and variables -> Actions -> New repository secret
+Name: ELSEVIER_API_KEY
+Value: Elsevier API Key
+
+Keyin:
+Actions -> Update Scopus enriched data -> Run workflow
+
+Natijada scopus_enriched.csv avtomatik yangilanadi.
