@@ -1,0 +1,18 @@
+{
+  "updated_at_utc": "2026-09-18T20:34:29Z",
+  "rows": 1479,
+  "unique_issn": 291,
+  "matched_publication_year_metrics": 1232,
+  "quartiles": {
+    "Q1": 146,
+    "Q2": 170,
+    "Q3": 393,
+    "Q4": 523,
+    "Aniqlanmagan": 247
+  },
+  "api_sources": {
+    "api": 289,
+    "HTTP 404": 2
+  },
+  "cache_days": 7
+}
