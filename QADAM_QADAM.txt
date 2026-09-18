@@ -1,27 +1,37 @@
-BUXDU SCOPUS GITHUB — FLAT VERSION
+BUXDU SCOPUS — RASMIY H-INDEX YANGILANISHI
 
-Bu paketda PAPKA YO'Q. GitHub web orqali hamma faylni root qismiga yuklash mumkin.
+GitHub repository root papkasida FAQAT 2 ta faylni almashtiring:
+1) update_scopus.py
+2) index.html
 
-GitHub'ga yuklanadigan fayllar:
-- index.html
-- scopus.csv
-- scopus_enriched.csv
-- update_scopus.py
+Boshqa fayllarga tegmang.
+ELSEVIER_API_KEY Secret o'sha holatda qoladi.
+Workflow faylini o'zgartirish shart emas.
 
-Workflow uchun:
-1. GitHub repository -> Actions
-2. "set up a workflow yourself" ni bosing.
-3. GitHub avtomatik .github/workflows/ papkasini o'zi yaratadi.
-4. Default fayl nomini update.yml qiling.
-5. GITHUB_WORKFLOW_COPY_THIS.txt ichidagi hamma matnni copy-paste qiling.
-6. Commit changes.
+NIMA QO'SHILDI
+- Elsevier Scopus Author Retrieval API, view=METRICS.
+- Rasmiy Scopus h-index.
+- Rasmiy Scopus document-count.
+- Scopus citations-count va cited-by-count.
+- TOP mualliflarda rasmiy h-index chiqadi.
+- Muallif profilida Scopus jami va BuxDU baza ko'rsatkichlari alohida.
+- Dataset h-index fallback sifatida saqlanadi.
 
-API Key:
-Settings -> Secrets and variables -> Actions -> New repository secret
-Name: ELSEVIER_API_KEY
-Value: Elsevier API Key
+API YUKLAMASI
+- CSVda taxminan minglab noyob muallif bo'lishi mumkin.
+- Birinchi ishga tushishda eng ko'p hujjatli 200 muallif API orqali olinadi.
+- Keyingi kunlik workflowlarda navbatdagi 200 muallif to'ldiriladi.
+- Shu sabab TOP mualliflar birinchi ishga tushishda rasmiy metrikaga ega bo'lishi kerak.
+- Author cache 30 kun saqlanadi.
+- Author cache data/api_cache ichida saqlanadi, shuning uchun eski workflow uni avtomatik commit qiladi.
 
-Keyin:
-Actions -> Update Scopus enriched data -> Run workflow
+KEYINGI QADAM
+1. GitHub root'dagi update_scopus.py ni shu fayl bilan almashtiring.
+2. index.html ni shu fayl bilan almashtiring.
+3. Commit changes.
+4. Actions -> Update Scopus enriched data -> Run workflow.
+5. Workflow yashil bo'lgach scopus_enriched.csv yangilanadi.
+6. GitHub Pages sahifasini Ctrl+F5 bilan yangilang.
 
-Natijada scopus_enriched.csv avtomatik yangilanadi.
+Agar Author Retrieval API uchun ruxsat bo'lmasa, workflow kvartil qismini baribir yangilaydi
+va panel CSV h-index fallbackini ko'rsatadi. Actions logida 401/403 xabari ko'rinadi.

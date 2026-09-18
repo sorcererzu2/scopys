@@ -69,7 +69,18 @@ let D=[{"title": "Leveraging P2P Systems for Collaborative E-Learning and Resour
 const $=id=>document.getElementById(id), sp=s=>String(s||"").split(";").map(x=>x.trim()).filter(Boolean);
 function pair(x){let a=[],seen={};sp(x.full).forEach(v=>{let m=v.match(/^(.*?)\s*\((\d{6,})\)\s*$/);if(m){a.push({name:m[1].trim(),id:m[2]});seen[m[2]]=1}});sp(x.ids).forEach(id=>{if(!seen[id])a.push({name:id,id:id})});return a}
 function hidx(cs){let a=cs.slice().sort((x,y)=>y-x),h=0;a.forEach((c,i)=>{if(c>=i+1)h=i+1});return h}
-function authorMap(arr){let m={};arr.forEach(x=>pair(x).forEach(a=>{if(!m[a.id])m[a.id]={id:a.id,name:a.name,n:0,c:0,cs:[]};m[a.id].n++;m[a.id].c+=x.cited;m[a.id].cs.push(x.cited);if(m[a.id].name===a.id&&a.name!==a.id)m[a.id].name=a.name}));Object.values(m).forEach(a=>a.h=hidx(a.cs));return m}
+function authorMetricFromRow(x,id){return x&&x.authorMetrics&&x.authorMetrics[id]?x.authorMetrics[id]:null}
+function authorMap(arr){
+ let m={};
+ arr.forEach(x=>pair(x).forEach(a=>{
+   if(!m[a.id])m[a.id]={id:a.id,name:a.name,n:0,c:0,cs:[],scopus:null};
+   m[a.id].n++;m[a.id].c+=x.cited;m[a.id].cs.push(x.cited);
+   if(m[a.id].name===a.id&&a.name!==a.id)m[a.id].name=a.name;
+   let sm=authorMetricFromRow(x,a.id);if(sm&&!m[a.id].scopus)m[a.id].scopus=sm;
+ }));
+ Object.values(m).forEach(a=>a.h=hidx(a.cs));
+ return m
+}
 let AM=authorMap(D);
 function fill(id,vals){let e=$(id);[...new Set(vals.filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),undefined,{numeric:true})).forEach(v=>{let o=document.createElement("option");o.value=v;o.textContent=v;e.appendChild(o)})}
 fill("year",D.map(x=>x.year).sort((a,b)=>b-a));fill("typ",D.map(x=>x.typ));fill("source",D.map(x=>x.source));fill("publisher",D.map(x=>x.publisher));fill("lang",D.map(x=>x.lang));fill("stage",D.map(x=>x.stage));
@@ -89,8 +100,8 @@ function scopusUrl(x){let u=safeUrl(x.link);if(u)return u;if(x.eid)return "https
 function doiUrl(x){return x.doi?"https://doi.org/"+encodeURIComponent(x.doi):""}
 function downloadArticleCSV(i){
   let a=F.slice().sort((x,y)=>y.year-x.year||y.cited-x.cited),x=a[i];if(!x)return;
-  let h=["Year","Title","Authors","Scopus Author IDs","Source","ISSN","Document Type","Cited by","Open Access","Quartile","BestPercentile","CiteScore","MetricStatus","DOI","EID","Scopus Link"];
-  let r=[x.year,x.title,x.authors,x.ids,x.source,x.issn,x.typ,x.cited,x.oa,x.quartile,x.percentile,x.citescore,x.metricStatus,x.doi,x.eid,scopusUrl(x)];
+  let h=["Year","Title","Authors","Scopus Author IDs","Source","ISSN","Document Type","Cited by","Open Access","Quartile","BestPercentile","CiteScore","MetricStatus","DOI","EID","Scopus Link","Scopus Author Metrics JSON"];
+  let r=[x.year,x.title,x.authors,x.ids,x.source,x.issn,x.typ,x.cited,x.oa,x.quartile,x.percentile,x.citescore,x.metricStatus,x.doi,x.eid,scopusUrl(x),JSON.stringify(x.authorMetrics||{})];
   let escCsv=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
   let csv="\ufeff"+h.map(escCsv).join(",")+"\r\n"+r.map(escCsv).join(",");
   let blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),u=URL.createObjectURL(blob),ael=document.createElement("a");
@@ -99,12 +110,17 @@ function downloadArticleCSV(i){
 }
 function render(){let am=authorMap(F),cit=F.reduce((a,x)=>a+x.cited,0);$("docs").textContent=F.length;$("articles").textContent=F.filter(x=>x.typ==="Article").length;$("conf").textContent=F.filter(x=>x.typ==="Conference paper").length;$("authors").textContent=Object.keys(am).length;$("cites").textContent=cit;$("zero").textContent=F.filter(x=>x.cited===0).length;$("open").textContent=F.filter(x=>x.oa).length;$("sources").textContent=new Set(F.map(x=>x.source).filter(Boolean)).size;
 $("status").textContent=`Ma’lumot yuklandi: ${D.length} ta yozuv · Hozirgi filtr: ${F.length} ta`+(sel?` · ${AM[sel]?.name||sel} · Scopus ID ${sel}`:"");
-let ab=$("activeAuthor");if(sel){$("activeAuthorText").innerHTML=`Faol muallif filtri: <b>${esc(AM[sel]?.name||sel)}</b> · Scopus ID: <b>${sel}</b> · ${F.length} ta hujjat`;ab.classList.add("on")}else ab.classList.remove("on");
+let ab=$("activeAuthor");if(sel){let ga=AM[sel],sm=ga?.scopus;$("activeAuthorText").innerHTML=`Faol muallif filtri: <b>${esc(ga?.name||sel)}</b> · Scopus ID: <b>${sel}</b> · BuxDU baza: <b>${F.length}</b>${sm&&sm.document_count!=null?` · Scopus jami: <b>${sm.document_count}</b>`:""}`;ab.classList.add("on")}else ab.classList.remove("on");
 let ym={};F.forEach(x=>x.year&&(ym[x.year]=(ym[x.year]||0)+1));let ya=Object.entries(ym).sort((a,b)=>a[0]-b[0]),mx=Math.max(1,...ya.map(x=>x[1]));$("yearChart").innerHTML=ya.map(x=>`<div class="bc"><div class="bar" style="height:${x[1]/mx*100}%" onclick="setYear('${x[0]}')"><b>${x[1]}</b></div><div class="xl">${x[0]}</div></div>`).join("");
 let seg=[["0",F.filter(x=>x.cited===0).length],["1–4",F.filter(x=>x.cited>=1&&x.cited<=4).length],["5–9",F.filter(x=>x.cited>=5&&x.cited<=9).length],["10–24",F.filter(x=>x.cited>=10&&x.cited<=24).length],["25+",F.filter(x=>x.cited>=25).length]];$("heat").innerHTML=seg.map(x=>`<div onclick="setCit('${x[0]==="0"?"0":x[0].startsWith("1–")?"1":x[0].startsWith("5")?"5":x[0].startsWith("10")?"10":"25"}')"><b>${x[1]}</b>${x[0]}</div>`).join("");
 let aa=Object.values(am).sort((a,b)=>b.n-a.n);let tn=Number($("topN")?.value||10);
 let amx=Math.max(1,...aa.map(x=>x.n));
-$("topAuthors").innerHTML=aa.slice(0,tn).map((x,i)=>`<div class="rank clickable" onclick="filterAuthorRow('${x.id}')"><b>${i+1}</b><div>${esc(x.name)} | ${x.id} | h=${x.h}<div class="prog"><i style="width:${x.n/amx*100}%"></i></div></div><div><b>${x.n}</b><button class="profile-mini" onclick="event.stopPropagation();authorProfile('${x.id}')">PROFIL</button></div></div>`).join("");
+$("topAuthors").innerHTML=aa.slice(0,tn).map((x,i)=>{
+ let g=AM[x.id]||x,sm=g.scopus;
+ let htxt=sm&&sm.h_index!=null?`Scopus h=${sm.h_index}`:`CSV h=${g.h}`;
+ let dtxt=sm&&sm.document_count!=null?`Scopus: ${sm.document_count} · BuxDU baza: ${g.n}`:`BuxDU baza: ${g.n}`;
+ return `<div class="rank clickable" onclick="filterAuthorRow('${x.id}')"><b>${i+1}</b><div>${esc(x.name)} | ${x.id}<br><small><b>${htxt}</b> · ${dtxt}</small><div class="prog"><i style="width:${x.n/amx*100}%"></i></div></div><div><b>${x.n}</b><button class="profile-mini" onclick="event.stopPropagation();authorProfile('${x.id}')">PROFIL</button></div></div>`
+}).join("");
 rank("topSources",cmap("source"),v=>`filterSourceRow(${JSON.stringify(v)})`);
 rank("types",cmap("typ"),v=>`setType(${JSON.stringify(v)})`);rank("publishers",cmap("publisher"));rank("langs",cmap("lang"));
 let qCounts={Q1:0,Q2:0,Q3:0,Q4:0,NA:0};F.forEach(x=>{let q=canonQuartile(x.quartile);if(q)qCounts[q]++;else qCounts.NA++});
@@ -147,6 +163,7 @@ function authorProfile(id){
   let all=authorMap(D), a=all[id]; if(!a)return;
   let docs=D.filter(x=>sp(x.ids).includes(id)).sort((x,y)=>y.year-x.year||y.cited-x.cited);
   let totalC=docs.reduce((z,x)=>z+x.cited,0), h=hidx(docs.map(x=>x.cited));
+  let sm=a.scopus||null;
   let oaN=docs.filter(x=>x.oa).length, zeroN=docs.filter(x=>x.cited===0).length;
   let avg=docs.length?(totalC/docs.length).toFixed(1):"0.0";
   let yrs=docs.map(x=>x.year).filter(Boolean), minY=yrs.length?Math.min(...yrs):"—", maxY=yrs.length?Math.max(...yrs):"—";
@@ -173,9 +190,13 @@ function authorProfile(id){
 
   $("apBody").innerHTML=`
   <div class="ap-kpis">
-    <div class="ap-kpi"><small>Jami hujjat</small><b>${docs.length}</b></div>
-    <div class="ap-kpi"><small>Jami citation</small><b>${totalC}</b></div>
-    <div class="ap-kpi"><small>CSV h-index</small><b>${h}</b></div>
+    <div class="ap-kpi"><small>Scopus h-index</small><b>${sm&&sm.h_index!=null?sm.h_index:"—"}</b></div>
+    <div class="ap-kpi"><small>Scopus jami hujjat</small><b>${sm&&sm.document_count!=null?sm.document_count:"—"}</b></div>
+    <div class="ap-kpi"><small>Scopus citations</small><b>${sm&&sm.citations_count!=null?sm.citations_count:"—"}</b></div>
+    <div class="ap-kpi"><small>Scopus citing docs</small><b>${sm&&sm.cited_by_count!=null?sm.cited_by_count:"—"}</b></div>
+    <div class="ap-kpi"><small>BuxDU baza hujjat</small><b>${docs.length}</b></div>
+    <div class="ap-kpi"><small>BuxDU dataset h-index</small><b>${h}</b></div>
+    <div class="ap-kpi"><small>BuxDU dataset citation</small><b>${totalC}</b></div>
     <div class="ap-kpi"><small>O‘rtacha citation</small><b>${avg}</b></div>
     <div class="ap-kpi"><small>Article</small><b>${artN}</b></div>
     <div class="ap-kpi"><small>Conference</small><b>${confN}</b></div>
@@ -183,7 +204,7 @@ function authorProfile(id){
     <div class="ap-kpi"><small>0 citation</small><b>${zeroN}</b></div>
   </div>
 
-  <div class="ap-note"><b>H-index izohi:</b> bu qiymat universitetning joriy CSV faylidagi hujjatlar va “Cited by” qiymatlaridan hisoblanadi. Rasmiy Scopus Author Profile h-index muallifning Scopusdagi barcha hujjatlarini qamrab olgani sababli farq qilishi mumkin.</div>
+  <div class="ap-note">${sm?`<b>Rasmiy Scopus metrikasi:</b> Author Retrieval API / METRICS orqali olingan. Yangilangan: <b>${esc(sm.updated_at||"—")}</b>. `:`<b>Scopus rasmiy metrikasi hali olinmagan.</b> GitHub Action keyingi ishga tushishlarda mualliflarni navbat bilan API orqali to‘ldiradi. `}<b>BuxDU baza</b> ko‘rsatkichlari esa joriy <code>scopus.csv</code> ichidagi hujjatlardan hisoblanadi; shu sabab Scopus jami bilan farq qilishi mumkin.</div>
 
   <div class="ap-cols">
     <div class="ap-card"><h3>Yillar bo‘yicha ilmiy faollik</h3><div class="ap-bars">${yearBars||"Ma’lumot yo‘q"}</div></div>
@@ -206,7 +227,7 @@ function authorProfile(id){
   <div class="ap-card" style="margin-top:10px">
     <h3>Muallifning barcha hujjatlari — ${docs.length} ta</h3>
     <div class="ap-table"><table><thead><tr><th>№</th><th>Yil</th><th>Hujjat nomi</th><th>Source</th><th>Tur</th><th>Citation</th><th>OA</th><th>Q</th><th>Percentile</th><th>CiteScore</th><th>DOI</th><th>EID</th><th>Amal</th></tr></thead>
-    <tbody>${docs.map((x,i)=>`<tr><td>${i+1}</td><td><b>${x.year||""}</b></td><td>${esc(x.title)}</td><td>${esc(x.source)}</td><td>${esc(x.typ)}</td><td><b>${x.cited}</b></td><td>${x.oa?"OA":"—"}</td><td>${x.doi?`<a class="doi-link" target="_blank" href="https://doi.org/${encodeURIComponent(x.doi)}">${esc(x.doi)}</a>`:"—"}</td><td>${esc(x.eid||"—")}</td></tr>`).join("")}</tbody></table></div>
+    <tbody>${docs.map((x,i)=>{let q=canonQuartile(x.quartile)||"—",du=doiUrl(x),su=scopusUrl(x);return `<tr><td>${i+1}</td><td><b>${x.year||""}</b></td><td>${(du||su)?`<a class="doi-link" target="_blank" href="${du||su}">${esc(x.title)}</a>`:esc(x.title)}</td><td>${esc(x.source)}</td><td>${esc(x.typ)}</td><td><b>${x.cited}</b></td><td>${x.oa?"OA":"—"}</td><td>${esc(q)}</td><td>${esc(x.percentile||"—")}</td><td>${esc(x.citescore||"—")}</td><td>${du?`<a class="doi-link" target="_blank" href="${du}">${esc(x.doi)}</a>`:"—"}</td><td>${esc(x.eid||"—")}</td><td>${du?`<a class="action-btn green" target="_blank" href="${du}">Original/DOI</a>`:""}${su?`<a class="action-btn primary" target="_blank" href="${su}">Scopus</a>`:""}</td></tr>`}).join("")}</tbody></table></div>
   </div>
 
   <div class="ap-actions">
@@ -243,7 +264,8 @@ function doc(i){
  $("modal").classList.add("on")
 }
 function parseCSV(t){let rows=[],r=[],v="",q=false;for(let i=0;i<t.length;i++){let c=t[i];if(q){if(c=='"'&&t[i+1]=='"'){v+='"';i++}else if(c=='"')q=false;else v+=c}else if(c=='"')q=true;else if(c==','){r.push(v);v=""}else if(c=='\n'){r.push(v.replace(/\r$/,""));rows.push(r);r=[];v=""}else v+=c}if(v||r.length){r.push(v);rows.push(r)}return rows}
-function norm(o){let n=x=>{let z=parseFloat(x);return isFinite(z)?Math.round(z):0};return {title:o["Title"]||"",year:n(o["Year"]),authors:o["Authors"]||"",full:o["Author full names"]||"",ids:o["Author(s) ID"]||"",source:o["Source title"]||"",issn:o["ISSN"]||"",cited:n(o["Cited by"]),doi:o["DOI"]||"",link:o["Link"]||"",eid:o["EID"]||"",typ:o["Document Type"]||"",stage:o["Publication Stage"]||"",oa:o["Open Access"]||"",publisher:o["Publisher"]||"",lang:o["Language of Original Document"]||"",aff:o["Affiliations"]||"",author_aff:o["Authors with affiliations"]||"",quartile:canonQuartile(o["Quartile"]),percentile:String(o["BestPercentile"]||"").trim(),citescore:String(o["CiteScore"]||"").trim(),metricStatus:String(o["MetricStatus"]||"").trim(),sjr:String(o["SJR"]||"").trim(),snip:String(o["SNIP"]||"").trim()}}
+function parseAuthorMetricsJSON(v){try{let o=JSON.parse(String(v||"{}"));return o&&typeof o==="object"?o:{}}catch(e){return {}}}
+function norm(o){let n=x=>{let z=parseFloat(x);return isFinite(z)?Math.round(z):0};return {title:o["Title"]||"",year:n(o["Year"]),authors:o["Authors"]||"",full:o["Author full names"]||"",ids:o["Author(s) ID"]||"",source:o["Source title"]||"",issn:o["ISSN"]||"",cited:n(o["Cited by"]),doi:o["DOI"]||"",link:o["Link"]||"",eid:o["EID"]||"",typ:o["Document Type"]||"",stage:o["Publication Stage"]||"",oa:o["Open Access"]||"",publisher:o["Publisher"]||"",lang:o["Language of Original Document"]||"",aff:o["Affiliations"]||"",author_aff:o["Authors with affiliations"]||"",quartile:canonQuartile(o["Quartile"]),percentile:String(o["BestPercentile"]||"").trim(),citescore:String(o["CiteScore"]||"").trim(),metricStatus:String(o["MetricStatus"]||"").trim(),sjr:String(o["SJR"]||"").trim(),snip:String(o["SNIP"]||"").trim(),authorMetrics:parseAuthorMetricsJSON(o["ScopusAuthorMetricsJSON"])}}
 function rebuild(){
  ["year","typ","source","publisher","lang","stage"].forEach(id=>{$(id).innerHTML=`<option value="">${id==="year"?"Barcha yillar":id==="typ"?"Barcha turlar":id==="source"?"Barcha manbalar":"Barchasi"}</option>`});
  fill("year",D.map(x=>x.year).sort((a,b)=>b-a));fill("typ",D.map(x=>x.typ));fill("source",D.map(x=>x.source));fill("publisher",D.map(x=>x.publisher));fill("lang",D.map(x=>x.lang));fill("stage",D.map(x=>x.stage));AM=authorMap(D);sel="";apply()
