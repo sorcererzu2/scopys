@@ -28,6 +28,21 @@
 .action-btn.primary{background:#07365d;color:#fff;border-color:#07365d}
 .action-btn.green{background:#ecfdf3;color:#027a48;border-color:#abefc6}
 
+
+.buxdu-count-box{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-width:118px;padding:7px 10px;border-radius:10px;
+  background:#ecfdf3;border:1px solid #abefc6;color:#027a48;
+  line-height:1.15;margin-bottom:5px
+}
+.buxdu-count-box small{font-size:9px;font-weight:800;letter-spacing:.15px}
+.buxdu-count-box b{font-size:18px;margin-top:3px}
+.buxdu-h-kpi{
+  background:#fff7ed!important;border:1px solid #fed7aa!important;
+}
+.buxdu-h-kpi small{color:#9a3412!important;font-weight:800}
+.buxdu-h-kpi b{color:#c2410c!important}
+
 </style></head><body><header><div class="title">Buxoro davlat universiteti — Scopus Rektor Analitik Paneli</div><div class="sub">DAILY REKTOR PANEL · scopus.csv yonma-yon ishlaydi · H-index CSV asosida hisoblanadi</div></header><div class="wrap">
 <div class="filters">
 <div class="f search"><label>F.I.Sh. / O‘QITUVCHI</label><input id="fio" placeholder="Masalan: Esh..."><div id="sug" class="suggest"></div></div>
@@ -110,16 +125,28 @@ function downloadArticleCSV(i){
 }
 function render(){let am=authorMap(F),cit=F.reduce((a,x)=>a+x.cited,0);$("docs").textContent=F.length;$("articles").textContent=F.filter(x=>x.typ==="Article").length;$("conf").textContent=F.filter(x=>x.typ==="Conference paper").length;$("authors").textContent=Object.keys(am).length;$("cites").textContent=cit;$("zero").textContent=F.filter(x=>x.cited===0).length;$("open").textContent=F.filter(x=>x.oa).length;$("sources").textContent=new Set(F.map(x=>x.source).filter(Boolean)).size;
 $("status").textContent=`Ma’lumot yuklandi: ${D.length} ta yozuv · Hozirgi filtr: ${F.length} ta`+(sel?` · ${AM[sel]?.name||sel} · Scopus ID ${sel}`:"");
-let ab=$("activeAuthor");if(sel){let ga=AM[sel],sm=ga?.scopus;$("activeAuthorText").innerHTML=`Faol muallif filtri: <b>${esc(ga?.name||sel)}</b> · Scopus ID: <b>${sel}</b> · BuxDU baza: <b>${F.length}</b>${sm&&sm.document_count!=null?` · Scopus jami: <b>${sm.document_count}</b>`:""}`;ab.classList.add("on")}else ab.classList.remove("on");
+let ab=$("activeAuthor");if(sel){let ga=AM[sel],sm=ga?.scopus;$("activeAuthorText").innerHTML=`Faol muallif filtri: <b>${esc(ga?.name||sel)}</b> · Scopus ID: <b>${sel}</b> · BuxDU bazasida: <b>${F.length} ta hujjat</b>${sm&&sm.document_count!=null?` · Scopus jami: <b>${sm.document_count}</b>`:""}`;ab.classList.add("on")}else ab.classList.remove("on");
 let ym={};F.forEach(x=>x.year&&(ym[x.year]=(ym[x.year]||0)+1));let ya=Object.entries(ym).sort((a,b)=>a[0]-b[0]),mx=Math.max(1,...ya.map(x=>x[1]));$("yearChart").innerHTML=ya.map(x=>`<div class="bc"><div class="bar" style="height:${x[1]/mx*100}%" onclick="setYear('${x[0]}')"><b>${x[1]}</b></div><div class="xl">${x[0]}</div></div>`).join("");
 let seg=[["0",F.filter(x=>x.cited===0).length],["1–4",F.filter(x=>x.cited>=1&&x.cited<=4).length],["5–9",F.filter(x=>x.cited>=5&&x.cited<=9).length],["10–24",F.filter(x=>x.cited>=10&&x.cited<=24).length],["25+",F.filter(x=>x.cited>=25).length]];$("heat").innerHTML=seg.map(x=>`<div onclick="setCit('${x[0]==="0"?"0":x[0].startsWith("1–")?"1":x[0].startsWith("5")?"5":x[0].startsWith("10")?"10":"25"}')"><b>${x[1]}</b>${x[0]}</div>`).join("");
 let aa=Object.values(am).sort((a,b)=>b.n-a.n);let tn=Number($("topN")?.value||10);
 let amx=Math.max(1,...aa.map(x=>x.n));
 $("topAuthors").innerHTML=aa.slice(0,tn).map((x,i)=>{
- let g=AM[x.id]||x,sm=g.scopus;
- let htxt=sm&&sm.h_index!=null?`Scopus h=${sm.h_index}`:`CSV h=${g.h}`;
- let dtxt=sm&&sm.document_count!=null?`Scopus: ${sm.document_count} · BuxDU baza: ${g.n}`:`BuxDU baza: ${g.n}`;
- return `<div class="rank clickable" onclick="filterAuthorRow('${x.id}')"><b>${i+1}</b><div>${esc(x.name)} | ${x.id}<br><small><b>${htxt}</b> · ${dtxt}</small><div class="prog"><i style="width:${x.n/amx*100}%"></i></div></div><div><b>${x.n}</b><button class="profile-mini" onclick="event.stopPropagation();authorProfile('${x.id}')">PROFIL</button></div></div>`
+ let g=AM[x.id]||x;
+ return `<div class="rank clickable" onclick="filterAuthorRow('${x.id}')">
+   <b>${i+1}</b>
+   <div>
+     <b>${esc(x.name)}</b><br>
+     <small>Scopus ID: ${x.id}</small>
+     <div class="prog"><i style="width:${x.n/amx*100}%"></i></div>
+   </div>
+   <div style="display:flex;flex-direction:column;align-items:center">
+     <div class="buxdu-count-box">
+       <small>BuxDU bazasida</small>
+       <b>${g.n} ta</b>
+     </div>
+     <button class="profile-mini" onclick="event.stopPropagation();authorProfile('${x.id}')">MUALLIF PROFILI</button>
+   </div>
+ </div>`
 }).join("");
 rank("topSources",cmap("source"),v=>`filterSourceRow(${JSON.stringify(v)})`);
 rank("types",cmap("typ"),v=>`setType(${JSON.stringify(v)})`);rank("publishers",cmap("publisher"));rank("langs",cmap("lang"));
@@ -195,8 +222,8 @@ function authorProfile(id){
     <div class="ap-kpi"><small>Scopus citations</small><b>${sm&&sm.citations_count!=null?sm.citations_count:"—"}</b></div>
     <div class="ap-kpi"><small>Scopus citing docs</small><b>${sm&&sm.cited_by_count!=null?sm.cited_by_count:"—"}</b></div>
     <div class="ap-kpi"><small>BuxDU baza hujjat</small><b>${docs.length}</b></div>
-    <div class="ap-kpi"><small>BuxDU dataset h-index</small><b>${h}</b></div>
-    <div class="ap-kpi"><small>BuxDU dataset citation</small><b>${totalC}</b></div>
+    <div class="ap-kpi buxdu-h-kpi"><small>BuxDU bazasi h-index</small><b>${h}</b></div>
+    <div class="ap-kpi"><small>BuxDU bazasi citation</small><b>${totalC}</b></div>
     <div class="ap-kpi"><small>O‘rtacha citation</small><b>${avg}</b></div>
     <div class="ap-kpi"><small>Article</small><b>${artN}</b></div>
     <div class="ap-kpi"><small>Conference</small><b>${confN}</b></div>
@@ -204,7 +231,7 @@ function authorProfile(id){
     <div class="ap-kpi"><small>0 citation</small><b>${zeroN}</b></div>
   </div>
 
-  <div class="ap-note">${sm?`<b>Rasmiy Scopus metrikasi:</b> Author Retrieval API / METRICS orqali olingan. Yangilangan: <b>${esc(sm.updated_at||"—")}</b>. `:`<b>Scopus rasmiy metrikasi hali olinmagan.</b> GitHub Action keyingi ishga tushishlarda mualliflarni navbat bilan API orqali to‘ldiradi. `}<b>BuxDU baza</b> ko‘rsatkichlari esa joriy <code>scopus.csv</code> ichidagi hujjatlardan hisoblanadi; shu sabab Scopus jami bilan farq qilishi mumkin.</div>
+  <div class="ap-note">${sm?`<b>Rasmiy Scopus metrikasi:</b> Author Retrieval API / METRICS orqali olingan. Yangilangan: <b>${esc(sm.updated_at||"—")}</b>. `:`<b>Rasmiy Scopus metrikasi mavjud emas.</b> `}<b>BuxDU bazasi</b> ko‘rsatkichlari joriy <code>scopus.csv</code> ichidagi hujjatlardan hisoblanadi.</div>
 
   <div class="ap-cols">
     <div class="ap-card"><h3>Yillar bo‘yicha ilmiy faollik</h3><div class="ap-bars">${yearBars||"Ma’lumot yo‘q"}</div></div>
