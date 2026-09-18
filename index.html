@@ -20,6 +20,14 @@
 .rank.clickable:hover{background:#eaf3ff}
 .profile-mini{border:0;background:#eef4ff;color:#07365d;padding:4px 7px;border-radius:6px;font-size:9px;font-weight:700;cursor:pointer;margin-left:5px}
 .profile-mini:hover{background:#d8e9ff}
+
+.qbadge{display:inline-block;min-width:32px;text-align:center;padding:4px 7px;border-radius:999px;font-weight:800;font-size:10px;background:#eef4ff;color:#07365d;border:1px solid #d7e6ff}
+.qbadge.na{background:#f2f4f7;color:#667085;border-color:#e4e7ec}
+.action-btn{display:inline-block;text-decoration:none;border:1px solid #cbd5e1;background:#fff;color:#07365d;padding:5px 8px;border-radius:7px;font-size:9px;font-weight:700;margin:1px;cursor:pointer}
+.action-btn:hover{background:#eef4ff}
+.action-btn.primary{background:#07365d;color:#fff;border-color:#07365d}
+.action-btn.green{background:#ecfdf3;color:#027a48;border-color:#abefc6}
+
 </style></head><body><header><div class="title">Buxoro davlat universiteti — Scopus Rektor Analitik Paneli</div><div class="sub">DAILY REKTOR PANEL · scopus.csv yonma-yon ishlaydi · H-index CSV asosida hisoblanadi</div></header><div class="wrap">
 <div class="filters">
 <div class="f search"><label>F.I.Sh. / O‘QITUVCHI</label><input id="fio" placeholder="Masalan: Esh..."><div id="sug" class="suggest"></div></div>
@@ -43,7 +51,7 @@
 <option value="10">TOP 10</option><option value="20">TOP 20</option><option value="30">TOP 30</option>
 </select></div><div id="topAuthors"></div></div><div class="card"><h3>TOP jurnal / manbalar</h3><div class="hint"><b>Manba ustiga bosing — pastda faqat shu manbadagi maqolalar qoladi.</b></div><div id="topSources"></div></div><div class="card"><h3>Q1 / Q2 / Q3 / Q4</h3><div class="hint"><b>Kvartil ustiga bosing — shu kvartildagi maqolalar qoladi.</b><br><span id="quartStatus">Kvartil mapping tekshirilmoqda...</span></div><div id="quartChart"></div></div></div>
 <div class="grid3"><div class="card"><h3>Hujjat turlari</h3><div id="types"></div></div><div class="card"><h3>TOP publisher</h3><div id="publishers"></div></div><div class="card"><h3>Nashr tillari</h3><div id="langs"></div></div></div>
-<div class="card" id="registry" style="margin-top:10px"><h3>Maqolalar / hujjatlar reyestri</h3><div class="hint" id="count"></div><div class="table"><table><thead><tr><th>№</th><th>Yil</th><th>Nomi</th><th>Mualliflar</th><th>Source</th><th>Tur</th><th>Citation</th><th>OA</th><th>Q</th><th>Percentile</th><th>CiteScore</th><th>DOI</th><th>EID</th></tr></thead><tbody id="rows"></tbody></table></div></div>
+<div class="card" id="registry" style="margin-top:10px"><h3>Maqolalar / hujjatlar reyestri</h3><div class="hint" id="count"></div><div class="table"><table><thead><tr><th>№</th><th>Yil</th><th>Nomi</th><th>Mualliflar</th><th>Source</th><th>Tur</th><th>Citation</th><th>OA</th><th>Q</th><th>Percentile</th><th>CiteScore</th><th>DOI</th><th>EID</th><th>Amal</th></tr></thead><tbody id="rows"></tbody></table></div></div>
 </div>
 <div class="author-modal" id="authorModal">
   <div class="author-dialog">
@@ -66,11 +74,24 @@ let AM=authorMap(D);
 function fill(id,vals){let e=$(id);[...new Set(vals.filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),undefined,{numeric:true})).forEach(v=>{let o=document.createElement("option");o.value=v;o.textContent=v;e.appendChild(o)})}
 fill("year",D.map(x=>x.year).sort((a,b)=>b-a));fill("typ",D.map(x=>x.typ));fill("source",D.map(x=>x.source));fill("publisher",D.map(x=>x.publisher));fill("lang",D.map(x=>x.lang));fill("stage",D.map(x=>x.stage));
 function apply(){let y=$("year").value,t=$("typ").value,s=$("source").value,c=$("cit").value,o=$("oa").value,p=$("publisher").value,l=$("lang").value,st=$("stage").value,q=$("quart").value;
-F=D.filter(x=>(!sel||sp(x.ids).includes(sel))&&(!y||String(x.year)===y)&&(!t||x.typ===t)&&(!s||x.source===s)&&(!p||x.publisher===p)&&(!l||x.lang===l)&&(!st||x.stage===st)&&(!o||(o==="1"?!!x.oa:!x.oa))&&(!q||(q==="NA"?!x.quart:x.quart===q))&&(!c||(c==="0"?x.cited===0:c==="1"?x.cited>=1&&x.cited<=4:c==="5"?x.cited>=5&&x.cited<=9:c==="10"?x.cited>=10&&x.cited<=24:x.cited>=25)));
+F=D.filter(x=>(!sel||sp(x.ids).includes(sel))&&(!y||String(x.year)===y)&&(!t||x.typ===t)&&(!s||x.source===s)&&(!p||x.publisher===p)&&(!l||x.lang===l)&&(!st||x.stage===st)&&(!o||(o==="1"?!!x.oa:!x.oa))&&(!q||(q==="NA"?!x.quartile:x.quartile===q))&&(!c||(c==="0"?x.cited===0:c==="1"?x.cited>=1&&x.cited<=4:c==="5"?x.cited>=5&&x.cited<=9:c==="10"?x.cited>=10&&x.cited<=24:x.cited>=25)));
 render()}
 function cmap(key){let m={};F.forEach(x=>{let v=x[key]||"Noma'lum";m[v]=(m[v]||0)+1});return Object.entries(m).sort((a,b)=>b[1]-a[1])}
 function rank(id,a,click,lim=10){let mx=Math.max(1,...a.map(x=>x[1]));$(id).innerHTML=a.slice(0,lim).map((x,i)=>`<div class="rank ${click?"clickable":""}" ${click?`onclick="${click(x[0])}"`:""}><b>${i+1}</b><div>${esc(x[0])}<div class="prog"><i style="width:${x[1]/mx*100}%"></i></div></div><b>${x[1]}</b></div>`).join("")}
 function esc(s){return String(s??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]))}
+function safeUrl(u){let v=String(u||"").trim();return /^https?:\/\//i.test(v)?v:""}
+function scopusUrl(x){let u=safeUrl(x.link);if(u)return u;if(x.eid)return "https://www.scopus.com/record/display.uri?eid="+encodeURIComponent(x.eid)+"&origin=resultslist";return ""}
+function doiUrl(x){return x.doi?"https://doi.org/"+encodeURIComponent(x.doi):""}
+function downloadArticleCSV(i){
+  let a=F.slice().sort((x,y)=>y.year-x.year||y.cited-x.cited),x=a[i];if(!x)return;
+  let h=["Year","Title","Authors","Scopus Author IDs","Source","ISSN","Document Type","Cited by","Open Access","Quartile","BestPercentile","CiteScore","MetricStatus","DOI","EID","Scopus Link"];
+  let r=[x.year,x.title,x.authors,x.ids,x.source,x.issn,x.typ,x.cited,x.oa,x.quartile,x.percentile,x.citescore,x.metricStatus,x.doi,x.eid,scopusUrl(x)];
+  let escCsv=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
+  let csv="\ufeff"+h.map(escCsv).join(",")+"\r\n"+r.map(escCsv).join(",");
+  let blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),u=URL.createObjectURL(blob),ael=document.createElement("a");
+  ael.href=u;ael.download="maqola_"+String(x.eid||x.doi||x.year||"scopus").replace(/[^a-zA-Z0-9._-]/g,"_")+".csv";
+  document.body.appendChild(ael);ael.click();ael.remove();URL.revokeObjectURL(u)
+}
 function render(){let am=authorMap(F),cit=F.reduce((a,x)=>a+x.cited,0);$("docs").textContent=F.length;$("articles").textContent=F.filter(x=>x.typ==="Article").length;$("conf").textContent=F.filter(x=>x.typ==="Conference paper").length;$("authors").textContent=Object.keys(am).length;$("cites").textContent=cit;$("zero").textContent=F.filter(x=>x.cited===0).length;$("open").textContent=F.filter(x=>x.oa).length;$("sources").textContent=new Set(F.map(x=>x.source).filter(Boolean)).size;
 $("status").textContent=`Ma’lumot yuklandi: ${D.length} ta yozuv · Hozirgi filtr: ${F.length} ta`+(sel?` · ${AM[sel]?.name||sel} · Scopus ID ${sel}`:"");
 let ab=$("activeAuthor");if(sel){$("activeAuthorText").innerHTML=`Faol muallif filtri: <b>${esc(AM[sel]?.name||sel)}</b> · Scopus ID: <b>${sel}</b> · ${F.length} ta hujjat`;ab.classList.add("on")}else ab.classList.remove("on");
@@ -81,8 +102,10 @@ let amx=Math.max(1,...aa.map(x=>x.n));
 $("topAuthors").innerHTML=aa.slice(0,tn).map((x,i)=>`<div class="rank clickable" onclick="filterAuthorRow('${x.id}')"><b>${i+1}</b><div>${esc(x.name)} | ${x.id} | h=${x.h}<div class="prog"><i style="width:${x.n/amx*100}%"></i></div></div><div><b>${x.n}</b><button class="profile-mini" onclick="event.stopPropagation();authorProfile('${x.id}')">PROFIL</button></div></div>`).join("");
 rank("topSources",cmap("source"),v=>`filterSourceRow(${JSON.stringify(v)})`);
 rank("types",cmap("typ"),v=>`setType(${JSON.stringify(v)})`);rank("publishers",cmap("publisher"));rank("langs",cmap("lang"));
-let qs=[["Q1",F.filter(x=>x.quart==="Q1").length],["Q2",F.filter(x=>x.quart==="Q2").length],["Q3",F.filter(x=>x.quart==="Q3").length],["Q4",F.filter(x=>x.quart==="Q4").length],["Aniqlanmagan",F.filter(x=>!x.quart).length]];rank("quartChart",qs,v=>`setQuart('${v==="Aniqlanmagan"?"NA":v}')`);
-$("count").textContent=F.length+" ta hujjat";$("rows").innerHTML=F.slice().sort((a,b)=>b.year-a.year||b.cited-a.cited).map((x,i)=>`<tr class="data" onclick="doc(${i})"><td>${i+1}</td><td><b>${x.year||""}</b></td><td>${esc(x.title)}</td><td>${esc(x.authors)}</td><td>${esc(x.source)}</td><td><span class="badge">${esc(x.typ)}</span></td><td><b>${x.cited}</b></td><td>${x.oa?"OA":"—"}</td><td><b>${esc(x.quartile||"—")}</b></td><td>${esc(x.percentile||"—")}</td><td>${esc(x.citescore||"—")}</td><td>${esc(x.doi||"—")}</td><td>${esc(x.eid||"—")}</td></tr>`).join("")}
+let qs=[["Q1",F.filter(x=>x.quartile==="Q1").length],["Q2",F.filter(x=>x.quartile==="Q2").length],["Q3",F.filter(x=>x.quartile==="Q3").length],["Q4",F.filter(x=>x.quartile==="Q4").length],["Aniqlanmagan",F.filter(x=>!x.quartile).length]];rank("quartChart",qs,v=>`setQuart('${v==="Aniqlanmagan"?"NA":v}')`);
+$("count").textContent=F.length+" ta hujjat";$("rows").innerHTML=F.slice().sort((a,b)=>b.year-a.year||b.cited-a.cited).map((x,i)=>{
+let su=scopusUrl(x),du=doiUrl(x),q=x.quartile||"—";
+return `<tr class="data" onclick="doc(${i})"><td>${i+1}</td><td><b>${x.year||""}</b></td><td>${esc(x.title)}</td><td>${esc(x.authors)}</td><td>${esc(x.source)}</td><td><span class="badge">${esc(x.typ)}</span></td><td><b>${x.cited}</b></td><td>${x.oa?"OA":"—"}</td><td><span class="qbadge ${q==="—"?"na":""}">${esc(q)}</span></td><td>${esc(x.percentile||"—")}</td><td>${esc(x.citescore||"—")}</td><td>${x.doi?`<a class="doi-link" target="_blank" onclick="event.stopPropagation()" href="${du}">${esc(x.doi)}</a>`:"—"}</td><td>${esc(x.eid||"—")}</td><td onclick="event.stopPropagation()">${su?`<a class="action-btn primary" target="_blank" href="${su}">Scopus</a>`:""}${du?`<a class="action-btn green" target="_blank" href="${du}">DOI</a>`:""}<button class="action-btn" onclick="downloadArticleCSV(${i})">CSV</button></td></tr>`}).join("")}
 function filterAuthorRow(id){
   sel=id;
   $("fio").value=AM[id]?.name||id;
@@ -175,7 +198,7 @@ function authorProfile(id){
 
   <div class="ap-card" style="margin-top:10px">
     <h3>Muallifning barcha hujjatlari — ${docs.length} ta</h3>
-    <div class="ap-table"><table><thead><tr><th>№</th><th>Yil</th><th>Hujjat nomi</th><th>Source</th><th>Tur</th><th>Citation</th><th>OA</th><th>Q</th><th>Percentile</th><th>CiteScore</th><th>DOI</th><th>EID</th></tr></thead>
+    <div class="ap-table"><table><thead><tr><th>№</th><th>Yil</th><th>Hujjat nomi</th><th>Source</th><th>Tur</th><th>Citation</th><th>OA</th><th>Q</th><th>Percentile</th><th>CiteScore</th><th>DOI</th><th>EID</th><th>Amal</th></tr></thead>
     <tbody>${docs.map((x,i)=>`<tr><td>${i+1}</td><td><b>${x.year||""}</b></td><td>${esc(x.title)}</td><td>${esc(x.source)}</td><td>${esc(x.typ)}</td><td><b>${x.cited}</b></td><td>${x.oa?"OA":"—"}</td><td>${x.doi?`<a class="doi-link" target="_blank" href="https://doi.org/${encodeURIComponent(x.doi)}">${esc(x.doi)}</a>`:"—"}</td><td>${esc(x.eid||"—")}</td></tr>`).join("")}</tbody></table></div>
   </div>
 
@@ -188,7 +211,30 @@ function authorProfile(id){
 }
 function closeAuthor(){$("authorModal").classList.remove("on")}
 
-function doc(i){let x=F.slice().sort((a,b)=>b.year-a.year||b.cited-a.cited)[i];$("mt").textContent=x.title;$("mb").innerHTML=`<p><b>Yil:</b> ${x.year} · <b>Tur:</b> ${esc(x.typ)} · <b>Citation:</b> ${x.cited}</p><p><b>Source:</b> ${esc(x.source)}</p><p><b>Mualliflar:</b> ${pair(x).map(a=>`${esc(a.name)} (${a.id})`).join("; ")}</p><p><b>DOI:</b> ${esc(x.doi||"—")} · <b>EID:</b> ${esc(x.eid||"—")}</p><p><b>Publisher:</b> ${esc(x.publisher||"—")} · <b>Til:</b> ${esc(x.lang||"—")}</p>`;$("modal").classList.add("on")}
+function doc(i){
+ let a=F.slice().sort((x,y)=>y.year-x.year||y.cited-x.cited),x=a[i];if(!x)return;
+ let su=scopusUrl(x),du=doiUrl(x);
+ $("mt").textContent=x.title;
+ $("mb").innerHTML=`
+ <div class="ap-kpis" style="grid-template-columns:repeat(6,1fr)">
+   <div class="ap-kpi"><small>Yil</small><b>${x.year||"—"}</b></div>
+   <div class="ap-kpi"><small>Citation</small><b>${x.cited}</b></div>
+   <div class="ap-kpi"><small>Kvartil</small><b>${esc(x.quartile||"—")}</b></div>
+   <div class="ap-kpi"><small>Percentile</small><b>${esc(x.percentile||"—")}</b></div>
+   <div class="ap-kpi"><small>CiteScore</small><b>${esc(x.citescore||"—")}</b></div>
+   <div class="ap-kpi"><small>Status</small><b style="font-size:13px">${esc(x.metricStatus||"—")}</b></div>
+ </div>
+ <p><b>Tur:</b> ${esc(x.typ)} · <b>Source:</b> ${esc(x.source)}</p>
+ <p><b>Mualliflar:</b> ${pair(x).map(a=>`${esc(a.name)} (${a.id})`).join("; ")}</p>
+ <p><b>DOI:</b> ${esc(x.doi||"—")} · <b>EID:</b> ${esc(x.eid||"—")} · <b>ISSN:</b> ${esc(x.issn||"—")}</p>
+ <p><b>Publisher:</b> ${esc(x.publisher||"—")} · <b>Til:</b> ${esc(x.lang||"—")}</p>
+ <div class="ap-actions">
+   ${su?`<a class="ap-btn primary" style="text-decoration:none" target="_blank" href="${su}">Scopus sahifasini ochish</a>`:""}
+   ${du?`<a class="ap-btn secondary" style="text-decoration:none" target="_blank" href="${du}">DOI / nashriyot sahifasi</a>`:""}
+   <button class="ap-btn light" onclick="downloadArticleCSV(${i})">Maqola metadata CSV</button>
+ </div>`;
+ $("modal").classList.add("on")
+}
 function parseCSV(t){let rows=[],r=[],v="",q=false;for(let i=0;i<t.length;i++){let c=t[i];if(q){if(c=='"'&&t[i+1]=='"'){v+='"';i++}else if(c=='"')q=false;else v+=c}else if(c=='"')q=true;else if(c==','){r.push(v);v=""}else if(c=='\n'){r.push(v.replace(/\r$/,""));rows.push(r);r=[];v=""}else v+=c}if(v||r.length){r.push(v);rows.push(r)}return rows}
 function norm(o){let n=x=>{let z=parseFloat(x);return isFinite(z)?Math.round(z):0};return {title:o["Title"]||"",year:n(o["Year"]),authors:o["Authors"]||"",full:o["Author full names"]||"",ids:o["Author(s) ID"]||"",source:o["Source title"]||"",issn:o["ISSN"]||"",cited:n(o["Cited by"]),doi:o["DOI"]||"",link:o["Link"]||"",eid:o["EID"]||"",typ:o["Document Type"]||"",stage:o["Publication Stage"]||"",oa:o["Open Access"]||"",publisher:o["Publisher"]||"",lang:o["Language of Original Document"]||"",aff:o["Affiliations"]||"",author_aff:o["Authors with affiliations"]||"",quartile:String(o["Quartile"]||"").trim().toUpperCase(),percentile:String(o["BestPercentile"]||"").trim(),citescore:String(o["CiteScore"]||"").trim(),metricStatus:String(o["MetricStatus"]||"").trim(),sjr:String(o["SJR"]||"").trim(),snip:String(o["SNIP"]||"").trim()}}
 function rebuild(){
@@ -212,7 +258,7 @@ async function refreshCSV(){
     D=raw.map(norm);
     rebuild();
     let mapped=D.filter(x=>/^Q[1-4]$/.test(x.quartile)).length;
-    let qs=$("quartStatus"); if(qs) qs.textContent=`API kvartili mavjud: ${mapped} / ${D.length} ta maqola`;
+    let qs=$("quartStatus"); if(qs) qs.textContent=`API kvartili mavjud: ${mapped} / ${D.length} ta maqola · ${D.length-mapped} ta aniqlanmagan`;
     document.querySelector(".sub").textContent=`GITHUB DAILY MODE · scopus_enriched.csv · ${D.length} ta yozuv`;
   }catch(e){
     let qs=$("quartStatus"); if(qs) qs.textContent="scopus_enriched.csv yuklanmadi: "+e.message;
