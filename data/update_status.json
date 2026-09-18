@@ -1,5 +1,5 @@
 {
-  "updated_at_utc": "2026-09-18T20:34:29Z",
+  "updated_at_utc": "2026-09-18T21:25:02Z",
   "rows": 1479,
   "unique_issn": 291,
   "matched_publication_year_metrics": 1232,
@@ -10,9 +10,21 @@
     "Q4": 523,
     "Aniqlanmagan": 247
   },
-  "api_sources": {
-    "api": 289,
+  "serial_api_sources": {
+    "cache": 289,
     "HTTP 404": 2
   },
-  "cache_days": 7
+  "serial_cache_days": 7,
+  "author_metrics": {
+    "unique_authors": 3600,
+    "official_metrics_available": 0,
+    "api_refresh_limit_per_run": 200,
+    "pending_before_run": 3600,
+    "api_blocked_or_not_entitled": true,
+    "sources": {
+      "cache_missing": 3600,
+      "HTTP 401": 1
+    }
+  },
+  "author_cache_days": 30
 }
