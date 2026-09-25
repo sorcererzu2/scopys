@@ -1,27 +1,29 @@
 {
-  "updated_at_utc": "2026-09-25T06:00:37Z",
-  "rows": 10,
-  "unique_issn": 10,
-  "matched_publication_year_metrics": 10,
+  "updated_at_utc": "2026-09-25T06:05:17Z",
+  "rows": 1490,
+  "unique_issn": 297,
+  "matched_publication_year_metrics": 1242,
   "quartiles": {
-    "Q1": 6,
-    "Q2": 3,
-    "Q3": 1,
-    "Q4": 0,
-    "Aniqlanmagan": 0
+    "Q1": 149,
+    "Q2": 174,
+    "Q3": 395,
+    "Q4": 524,
+    "Aniqlanmagan": 248
   },
   "serial_api_sources": {
-    "cache": 10
+    "cache": 290,
+    "api": 5,
+    "HTTP 404": 2
   },
   "serial_cache_days": 7,
   "author_metrics": {
-    "unique_authors": 85,
+    "unique_authors": 3630,
     "official_metrics_available": 0,
     "api_refresh_limit_per_run": 200,
-    "pending_before_run": 85,
+    "pending_before_run": 3630,
     "api_blocked_or_not_entitled": true,
     "sources": {
-      "cache_missing": 85,
+      "cache_missing": 3630,
       "HTTP 401": 1
     }
   },
