@@ -1,5 +1,5 @@
 {
-  "updated_at_utc": "2026-09-25T06:05:33Z",
+  "updated_at_utc": "2026-09-26T01:10:17Z",
   "rows": 1490,
   "unique_issn": 297,
   "matched_publication_year_metrics": 1242,
@@ -11,7 +11,8 @@
     "Aniqlanmagan": 248
   },
   "serial_api_sources": {
-    "cache": 295,
+    "api": 289,
+    "cache": 6,
     "HTTP 404": 2
   },
   "serial_cache_days": 7,
