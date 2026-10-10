@@ -1,17 +1,17 @@
 {
-  "updated_at_utc": "2026-10-09T01:13:59Z",
+  "updated_at_utc": "2026-10-10T01:14:56Z",
   "rows": 1490,
   "unique_issn": 297,
-  "matched_publication_year_metrics": 1242,
+  "matched_publication_year_metrics": 1236,
   "quartiles": {
-    "Q1": 149,
-    "Q2": 174,
-    "Q3": 395,
-    "Q4": 524,
-    "Aniqlanmagan": 248
+    "Q1": 148,
+    "Q2": 175,
+    "Q3": 386,
+    "Q4": 527,
+    "Aniqlanmagan": 254
   },
   "serial_api_sources": {
-    "cache": 295,
+    "api": 295,
     "HTTP 404": 2
   },
   "serial_cache_days": 7,
